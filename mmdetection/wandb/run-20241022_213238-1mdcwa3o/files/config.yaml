@@ -1,0 +1,823 @@
+_wandb:
+    value:
+        cli_version: 0.18.3
+        m: []
+        python_version: 3.10.13
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 37
+                - 38
+                - 41
+                - 43
+                - 49
+                - 53
+                - 55
+                - 80
+                - 82
+            "2":
+                - 1
+                - 5
+                - 11
+                - 37
+                - 38
+                - 41
+                - 43
+                - 49
+                - 53
+                - 55
+                - 80
+                - 82
+            "3":
+                - 2
+                - 13
+                - 16
+                - 23
+                - 55
+            "4": 3.10.13
+            "5": 0.18.3
+            "6": 4.45.2
+            "8":
+                - 1
+                - 5
+            "12": 0.18.3
+            "13": linux-x86_64
+auto_scale_lr:
+    value:
+        base_batch_size: 16
+backend_args:
+    value: null
+batch_augments:
+    value:
+        - pad_mask: true
+          size:
+            - 1280
+            - 1280
+          type: BatchFixedSizePad
+custom_imports:
+    value:
+        allow_failed_imports: false
+        imports:
+            - projects.CO-DETR.codetr
+data_root:
+    value: data/coco/
+dataset_type:
+    value: CocoDataset
+default_hooks:
+    value:
+        checkpoint:
+            _scope_: mmdet
+            by_epoch: true
+            interval: 1
+            max_keep_ckpts: 3
+            type: CheckpointHook
+        early_stopping:
+            check_finite: true
+            min_delta: 0.001
+            monitor: bbox_mAP
+            patience: 5
+            rule: greater
+            stopping_threshold: null
+            type: EarlyStoppingHook
+        logger:
+            _scope_: mmdet
+            interval: 50
+            type: LoggerHook
+        param_scheduler:
+            _scope_: mmdet
+            type: ParamSchedulerHook
+        sampler_seed:
+            _scope_: mmdet
+            type: DistSamplerSeedHook
+        timer:
+            _scope_: mmdet
+            type: IterTimerHook
+        visualization:
+            _scope_: mmdet
+            type: DetVisualizationHook
+default_scope:
+    value: mmdet
+env_cfg:
+    value:
+        cudnn_benchmark: false
+        dist_cfg:
+            backend: nccl
+        mp_cfg:
+            mp_start_method: fork
+            opencv_num_threads: 0
+evaluation:
+    value:
+        interval: 1
+        metric: bbox
+        save_best: auto
+image_size:
+    value:
+        - 1280
+        - 1280
+load_from:
+    value: null
+load_pipeline:
+    value:
+        - type: LoadImageFromFile
+        - type: LoadAnnotations
+          with_bbox: true
+          with_mask: true
+        - keep_ratio: true
+          ratio_range:
+            - 0.1
+            - 2
+          scale:
+            - 1280
+            - 1280
+          type: RandomResize
+        - allow_negative_crop: true
+          crop_size:
+            - 1280
+            - 1280
+          crop_type: absolute_range
+          recompute_bbox: true
+          type: RandomCrop
+        - min_gt_bbox_wh:
+            - 0.01
+            - 0.01
+          type: FilterAnnotations
+        - prob: 0.5
+          type: RandomFlip
+        - pad_val:
+            img:
+                - 114
+                - 114
+                - 114
+          size:
+            - 1280
+            - 1280
+          type: Pad
+log_level:
+    value: INFO
+log_processor:
+    value:
+        _scope_: mmdet
+        by_epoch: true
+        type: LogProcessor
+        window_size: 50
+loss_lambda:
+    value: 2
+max_epochs:
+    value: 50
+max_iters:
+    value: 270000
+model:
+    value:
+        backbone:
+            attn_drop_rate: 0
+            convert_weights: true
+            depths:
+                - 2
+                - 2
+                - 18
+                - 2
+            drop_path_rate: 0.3
+            drop_rate: 0
+            embed_dims: 192
+            init_cfg:
+                checkpoint: https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth
+                type: Pretrained
+            mlp_ratio: 4
+            num_heads:
+                - 6
+                - 12
+                - 24
+                - 48
+            out_indices:
+                - 0
+                - 1
+                - 2
+                - 3
+            patch_norm: true
+            pretrain_img_size: 384
+            qk_scale: null
+            qkv_bias: true
+            type: SwinTransformer
+            window_size: 12
+            with_cp: false
+        bbox_head:
+            - anchor_generator:
+                octave_base_scale: 8
+                ratios:
+                    - 1
+                scales_per_octave: 1
+                strides:
+                    - 4
+                    - 8
+                    - 16
+                    - 32
+                    - 64
+                    - 128
+                type: AnchorGenerator
+              bbox_coder:
+                target_means:
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                target_stds:
+                    - 0.1
+                    - 0.1
+                    - 0.2
+                    - 0.2
+                type: DeltaXYWHBBoxCoder
+              feat_channels: 256
+              in_channels: 256
+              loss_bbox:
+                loss_weight: 24
+                type: GIoULoss
+              loss_centerness:
+                loss_weight: 12
+                type: CrossEntropyLoss
+                use_sigmoid: true
+              loss_cls:
+                alpha: 0.25
+                gamma: 2
+                loss_weight: 12
+                type: FocalLoss
+                use_sigmoid: true
+              num_classes: 10
+              stacked_convs: 1
+              type: CoATSSHead
+        data_preprocessor:
+            batch_augments: null
+            bgr_to_rgb: true
+            mean:
+                - 123.675
+                - 116.28
+                - 103.53
+            pad_mask: false
+            pad_seg: false
+            pad_size_divisor: 32
+            std:
+                - 58.395
+                - 57.12
+                - 57.375
+            type: DetDataPreprocessor
+        eval_module: detr
+        neck:
+            act_cfg: null
+            in_channels:
+                - 192
+                - 384
+                - 768
+                - 1536
+            kernel_size: 1
+            norm_cfg:
+                num_groups: 32
+                type: GN
+            num_outs: 5
+            out_channels: 256
+            type: ChannelMapper
+        query_head:
+            as_two_stage: true
+            dn_cfg:
+                box_noise_scale: 1
+                group_cfg:
+                    dynamic: true
+                    num_dn_queries: 100
+                    num_groups: null
+                label_noise_scale: 0.5
+            in_channels: 2048
+            loss_bbox:
+                loss_weight: 5
+                type: L1Loss
+            loss_cls:
+                beta: 2
+                loss_weight: 1
+                type: QualityFocalLoss
+                use_sigmoid: true
+            loss_iou:
+                loss_weight: 2
+                type: GIoULoss
+            num_classes: 10
+            num_query: 900
+            positional_encoding:
+                normalize: true
+                num_feats: 128
+                temperature: 20
+                type: SinePositionalEncoding
+            transformer:
+                decoder:
+                    num_layers: 6
+                    return_intermediate: true
+                    transformerlayers:
+                        attn_cfgs:
+                            - dropout: 0
+                              embed_dims: 256
+                              num_heads: 8
+                              type: MultiheadAttention
+                            - dropout: 0
+                              embed_dims: 256
+                              num_levels: 5
+                              type: MultiScaleDeformableAttention
+                        feedforward_channels: 2048
+                        ffn_dropout: 0
+                        operation_order:
+                            - self_attn
+                            - norm
+                            - cross_attn
+                            - norm
+                            - ffn
+                            - norm
+                        type: DetrTransformerDecoderLayer
+                    type: DinoTransformerDecoder
+                encoder:
+                    num_layers: 6
+                    transformerlayers:
+                        attn_cfgs:
+                            dropout: 0
+                            embed_dims: 256
+                            num_levels: 5
+                            type: MultiScaleDeformableAttention
+                        feedforward_channels: 2048
+                        ffn_dropout: 0
+                        operation_order:
+                            - self_attn
+                            - norm
+                            - ffn
+                            - norm
+                        type: BaseTransformerLayer
+                    type: DetrTransformerEncoder
+                    with_cp: 6
+                num_co_heads: 2
+                num_feature_levels: 5
+                type: CoDinoTransformer
+                with_coord_feat: false
+            type: CoDINOHead
+        roi_head:
+            - bbox_head:
+                bbox_coder:
+                    target_means:
+                        - 0
+                        - 0
+                        - 0
+                        - 0
+                    target_stds:
+                        - 0.1
+                        - 0.1
+                        - 0.2
+                        - 0.2
+                    type: DeltaXYWHBBoxCoder
+                fc_out_channels: 1024
+                in_channels: 256
+                loss_bbox:
+                    loss_weight: 120
+                    type: GIoULoss
+                loss_cls:
+                    loss_weight: 12
+                    type: CrossEntropyLoss
+                    use_sigmoid: false
+                num_classes: 10
+                reg_class_agnostic: false
+                reg_decoded_bbox: true
+                roi_feat_size: 7
+                type: Shared2FCBBoxHead
+              bbox_roi_extractor:
+                featmap_strides:
+                    - 4
+                    - 8
+                    - 16
+                    - 32
+                    - 64
+                finest_scale: 56
+                out_channels: 256
+                roi_layer:
+                    output_size: 7
+                    sampling_ratio: 0
+                    type: RoIAlign
+                type: SingleRoIExtractor
+              type: CoStandardRoIHead
+        rpn_head:
+            anchor_generator:
+                octave_base_scale: 4
+                ratios:
+                    - 0.5
+                    - 1
+                    - 2
+                scales_per_octave: 3
+                strides:
+                    - 4
+                    - 8
+                    - 16
+                    - 32
+                    - 64
+                    - 128
+                type: AnchorGenerator
+            bbox_coder:
+                target_means:
+                    - 0
+                    - 0
+                    - 0
+                    - 0
+                target_stds:
+                    - 1
+                    - 1
+                    - 1
+                    - 1
+                type: DeltaXYWHBBoxCoder
+            feat_channels: 256
+            in_channels: 256
+            loss_bbox:
+                loss_weight: 12
+                type: L1Loss
+            loss_cls:
+                loss_weight: 12
+                type: CrossEntropyLoss
+                use_sigmoid: true
+            type: RPNHead
+        test_cfg:
+            - max_per_img: 300
+              nms:
+                iou_threshold: 0.8
+                type: soft_nms
+            - rcnn:
+                max_per_img: 100
+                nms:
+                    iou_threshold: 0.5
+                    type: nms
+                score_thr: 0
+              rpn:
+                max_per_img: 1000
+                min_bbox_size: 0
+                nms:
+                    iou_threshold: 0.7
+                    type: nms
+                nms_pre: 1000
+            - max_per_img: 100
+              min_bbox_size: 0
+              nms:
+                iou_threshold: 0.6
+                type: nms
+              nms_pre: 1000
+              score_thr: 0
+        train_cfg:
+            - assigner:
+                match_costs:
+                    - type: FocalLossCost
+                      weight: 2
+                    - box_format: xywh
+                      type: BBoxL1Cost
+                      weight: 5
+                    - iou_mode: giou
+                      type: IoUCost
+                      weight: 2
+                type: HungarianAssigner
+            - rcnn:
+                assigner:
+                    ignore_iof_thr: -1
+                    match_low_quality: false
+                    min_pos_iou: 0.5
+                    neg_iou_thr: 0.5
+                    pos_iou_thr: 0.5
+                    type: MaxIoUAssigner
+                debug: false
+                pos_weight: -1
+                sampler:
+                    add_gt_as_proposals: true
+                    neg_pos_ub: -1
+                    num: 512
+                    pos_fraction: 0.25
+                    type: RandomSampler
+              rpn:
+                allowed_border: -1
+                assigner:
+                    ignore_iof_thr: -1
+                    match_low_quality: true
+                    min_pos_iou: 0.3
+                    neg_iou_thr: 0.3
+                    pos_iou_thr: 0.7
+                    type: MaxIoUAssigner
+                debug: false
+                pos_weight: -1
+                sampler:
+                    add_gt_as_proposals: false
+                    neg_pos_ub: -1
+                    num: 256
+                    pos_fraction: 0.5
+                    type: RandomSampler
+              rpn_proposal:
+                max_per_img: 1000
+                min_bbox_size: 0
+                nms:
+                    iou_threshold: 0.7
+                    type: nms
+                nms_pre: 4000
+            - allowed_border: -1
+              assigner:
+                topk: 9
+                type: ATSSAssigner
+              debug: false
+              pos_weight: -1
+        type: CoDETR
+        use_lsj: true
+num_classes:
+    value: 10
+num_dec_layer:
+    value: 6
+optim_wrapper:
+    value:
+        clip_grad:
+            max_norm: 0.1
+            norm_type: 2
+        optimizer:
+            lr: 0.0001
+            type: AdamW
+            weight_decay: 0.0001
+        paramwise_cfg:
+            custom_keys:
+                backbone:
+                    lr_mult: 0.1
+        type: OptimWrapper
+param_scheduler:
+    value:
+        - begin: 0
+          by_epoch: true
+          end: 50
+          gamma: 0.1
+          milestones:
+            - 11
+          type: MultiStepLR
+pretrained:
+    value: https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth
+resume:
+    value: false
+test_cfg:
+    value:
+        _scope_: mmdet
+        type: TestLoop
+test_dataloader:
+    value:
+        batch_size: 1
+        dataset:
+            _scope_: mmdet
+            ann_file: annotations/instances_val2017.json
+            backend_args: null
+            data_prefix:
+                img: val2017/
+            data_root: data/coco/
+            pipeline:
+                - type: LoadImageFromFile
+                - keep_ratio: true
+                  scale:
+                    - 1280
+                    - 1280
+                  type: Resize
+                - pad_val:
+                    img:
+                        - 114
+                        - 114
+                        - 114
+                  size:
+                    - 1280
+                    - 1280
+                  type: Pad
+                - type: LoadAnnotations
+                  with_bbox: true
+                  with_mask: true
+                - meta_keys:
+                    - img_id
+                    - img_path
+                    - ori_shape
+                    - img_shape
+                    - scale_factor
+                  type: PackDetInputs
+            test_mode: true
+            type: CocoDataset
+        drop_last: false
+        num_workers: 2
+        persistent_workers: true
+        sampler:
+            _scope_: mmdet
+            shuffle: false
+            type: DefaultSampler
+test_evaluator:
+    value:
+        _scope_: mmdet
+        ann_file: data/coco/annotations/instances_val2017.json
+        backend_args: null
+        format_only: false
+        metric: bbox
+        type: CocoMetric
+test_pipeline:
+    value:
+        - type: LoadImageFromFile
+        - keep_ratio: true
+          scale:
+            - 1280
+            - 1280
+          type: Resize
+        - pad_val:
+            img:
+                - 114
+                - 114
+                - 114
+          size:
+            - 1280
+            - 1280
+          type: Pad
+        - type: LoadAnnotations
+          with_bbox: true
+          with_mask: true
+        - meta_keys:
+            - img_id
+            - img_path
+            - ori_shape
+            - img_shape
+            - scale_factor
+          type: PackDetInputs
+train_cfg:
+    value:
+        max_epochs: 50
+        type: EpochBasedTrainLoop
+        val_interval: 1
+train_dataloader:
+    value:
+        batch_size: 1
+        dataset:
+            _scope_: mmdet
+            dataset:
+                ann_file: /data/ephemeral/home/dataset/train_split.json
+                backend_args: null
+                data_prefix:
+                    img: /data/ephemeral/home/dataset/
+                data_root: /data/ephemeral/home/dataset/
+                filter_cfg:
+                    filter_empty_gt: true
+                    min_size: 32
+                metainfo:
+                    classes:
+                        - General trash
+                        - Paper
+                        - Paper pack
+                        - Metal
+                        - Glass
+                        - Plastic
+                        - Styrofoam
+                        - Plastic bag
+                        - Battery
+                        - Clothing
+                pipeline:
+                    - backend_args: null
+                      type: LoadImageFromFile
+                    - type: LoadAnnotations
+                      with_bbox: true
+                      with_label: true
+                      with_mask: false
+                    - keep_ratio: true
+                      ratio_range:
+                        - 0.8
+                        - 1.25
+                      scale:
+                        - 1024
+                        - 1024
+                      type: RandomResize
+                    - allow_negative_crop: true
+                      crop_size:
+                        - 1024
+                        - 1024
+                      crop_type: absolute_range
+                      recompute_bbox: true
+                      type: RandomCrop
+                    - min_gt_bbox_wh:
+                        - 0.01
+                        - 0.01
+                      type: FilterAnnotations
+                    - prob: 0.5
+                      type: RandomFlip
+                    - size:
+                        - 1024
+                        - 1024
+                      type: Pad
+                type: CocoDataset
+            pipeline:
+                - max_num_pasted: 100
+                  type: CopyPaste
+            type: MultiImageMixDataset
+        num_workers: 2
+        persistent_workers: false
+        prefetch_factor: 2
+        sampler:
+            _scope_: mmdet
+            shuffle: true
+            type: DefaultSampler
+train_pipeline:
+    value:
+        - max_num_pasted: 100
+          type: CopyPaste
+        - meta_keys:
+            - img_id
+            - img_path
+            - ori_shape
+            - img_shape
+            - scale_factor
+          type: PackDetInputs
+val_cfg:
+    value:
+        _scope_: mmdet
+        type: ValLoop
+val_dataloader:
+    value:
+        batch_size: 1
+        dataset:
+            _scope_: mmdet
+            ann_file: /data/ephemeral/home/dataset/val_split.json
+            backend_args: null
+            data_prefix:
+                img: /data/ephemeral/home/dataset/
+            data_root: /data/ephemeral/home/dataset/
+            filter_cfg:
+                filter_empty_gt: true
+                min_size: 32
+            metainfo:
+                classes:
+                    - General trash
+                    - Paper
+                    - Paper pack
+                    - Metal
+                    - Glass
+                    - Plastic
+                    - Styrofoam
+                    - Plastic bag
+                    - Battery
+                    - Clothing
+            pipeline:
+                - backend_args: null
+                  type: LoadImageFromFile
+                - type: LoadAnnotations
+                  with_bbox: true
+                  with_label: true
+                  with_mask: false
+                - keep_ratio: true
+                  ratio_range:
+                    - 0.8
+                    - 1.25
+                  scale:
+                    - 1024
+                    - 1024
+                  type: RandomResize
+                - allow_negative_crop: true
+                  crop_size:
+                    - 1024
+                    - 1024
+                  crop_type: absolute_range
+                  recompute_bbox: true
+                  type: RandomCrop
+                - min_gt_bbox_wh:
+                    - 0.01
+                    - 0.01
+                  type: FilterAnnotations
+                - prob: 0.5
+                  type: RandomFlip
+                - size:
+                    - 1024
+                    - 1024
+                  type: Pad
+                - type: PackDetInputs
+            test_mode: true
+            type: CocoDataset
+        drop_last: false
+        num_workers: 2
+        persistent_workers: false
+        prefetch_factor: 2
+        sampler:
+            _scope_: mmdet
+            shuffle: false
+            type: DefaultSampler
+val_evaluator:
+    value:
+        _scope_: mmdet
+        ann_file: /data/ephemeral/home/dataset/val_split.json
+        backend_args: null
+        format_only: false
+        metric: bbox
+        type: CocoMetric
+vis_backends:
+    value:
+        - _scope_: mmdet
+          type: LocalVisBackend
+visualizer:
+    value:
+        _scope_: mmdet
+        name: visualizer
+        type: Visualizer
+        vis_backends:
+            - commit: true
+              define_metric_cfg: null
+              init_kwargs:
+                allow_val_change: true
+                name: co_dino_5scale_swin_l_lsj_20241022_213238
+                project: Object_detection
+              log_code_name: null
+              save_dir: ./work_dirs/co_dino_custom
+              type: WandbVisBackend
+              watch_kwargs: null
+work_dir:
+    value: ./work_dirs/co_dino_custom
