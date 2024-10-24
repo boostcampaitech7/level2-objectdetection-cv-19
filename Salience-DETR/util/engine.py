@@ -8,6 +8,7 @@ import sys
 import time
 
 import torch
+import numpy as np
 from terminaltables import AsciiTable
 
 import util.utils as utils
@@ -94,12 +95,9 @@ def train_one_epoch_acc(
     metric_logger.synchronize_between_processes()
     logger.info(f"Averaged stats: {metric_logger}")
     return metric_logger
-
-
 @torch.no_grad()
 def evaluate_acc(model, data_loader, epoch, accelerator=None):
     logger = logging.getLogger(os.path.basename(os.getcwd()) + "." + __name__)
-    # evaluation uses single thread
     model.eval()
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = "Test:"
@@ -107,48 +105,75 @@ def evaluate_acc(model, data_loader, epoch, accelerator=None):
     coco = get_coco_api_from_dataset(data_loader.dataset)
     coco_evaluator = CocoEvaluator(coco, ["bbox"])
 
-    # for collect detection numbers
-    category_det_nums = [0] * (max(coco.getCatIds()) + 1)
+    # Initialize confusion matrix, detection count, and confidence record
+    num_classes = len(coco.getCatIds())  # Get the total number of classes
+    confusion_matrix = np.zeros((num_classes, num_classes), dtype=np.int32)
+    confidence_matrix = [[[] for _ in range(num_classes)] for _ in range(num_classes)]  # Confidence scores storage
+    category_det_nums = [0] * (num_classes + 1)  # Add +1 to avoid index errors
+    
+    # Dictionary to store samples with confidence below 0.5, categorized by actual class
+    low_confidence_samples = {class_id: [] for class_id in range(num_classes)}
+    
+    # Track undetected samples (False Negatives) for each class
+    undetected_samples = {class_id: 0 for class_id in range(num_classes)}
+
     for images, targets in metric_logger.log_every(data_loader, 10, header):
-        # get model predictions
+        # Get model predictions
         model_time = time.time()
         outputs = model(images)
-        # non_blocking=True here causes incorrect performance
-        outputs = [{k: v.to("cpu") for k, v in t.items()} for t in outputs]
+        outputs = [{k: v.to("cpu") for k, v in t.items()} for t in outputs]  # Move outputs to CPU
         model_time = time.time() - model_time
 
-        # perform evaluation through COCO API
         res = {target["image_id"]: output for target, output in zip(targets, outputs)}
-        evaluator_time = time.time()
         coco_evaluator.update(res)
+        evaluator_time = time.time()
+
+        # Update confusion matrix and detection counts
+        for target, output in zip(targets, outputs):
+            gt_labels = target["labels"].cpu().numpy()  # Ground truth labels
+            pred_labels = output["labels"].cpu().numpy()  # Predicted labels
+            scores = output["scores"].cpu().numpy()  # Prediction confidence scores
+
+            detected_gt = set()  # Track detected ground truth classes
+
+            for gt, pred, score in zip(gt_labels, pred_labels, scores):
+                if score > 0.5:  # Standard threshold for confusion matrix update
+                    confusion_matrix[gt, pred] += 1
+                    confidence_matrix[gt][pred].append(score)  # Record confidence score for each prediction
+                    detected_gt.add(gt)
+                else:
+                    # If score is below 0.5, log the sample for its actual class
+                    low_confidence_samples[gt].append((gt, pred, score))
+
+            # Check for undetected ground truths (False Negatives)
+            for gt in gt_labels:
+                if gt not in detected_gt:
+                    undetected_samples[gt] += 1  # Count False Negatives
+
+            # Update category detection counts (dets)
+            for pred in pred_labels:
+                category_det_nums[pred] += 1  # Increase the detection count for the predicted class
+
         evaluator_time = time.time() - evaluator_time
         metric_logger.update(model_time=model_time, evaluator_time=evaluator_time)
 
-        # update detection number
-        cat_names = [cat["name"] for cat in coco.loadCats(coco.getCatIds())]
-        for cat_name in cat_names:
-            cat_id = coco.getCatIds(catNms=cat_name)
-            cat_det_num = len(coco_evaluator.coco_eval["bbox"].cocoDt.getAnnIds(catIds=cat_id))
-            category_det_nums[cat_id[0]] += cat_det_num
-
-    # gather the stats from all processes
+    # Gather the stats from all processes
     metric_logger.synchronize_between_processes()
     logger.info(f"Averaged stats: {metric_logger}")
     coco_evaluator.synchronize_between_processes()
 
-    # accumulate predictions from all images
+    # Accumulate predictions from all images
     redirect_string = io.StringIO()
     with contextlib.redirect_stdout(redirect_string):
         coco_evaluator.accumulate()
         coco_evaluator.summarize()
     logger.info(redirect_string.getvalue())
 
-    # print category-wise evaluation results
+    # Print category-wise evaluation results
     cat_names = [cat["name"] for cat in coco.loadCats(coco.getCatIds())]
     table_data = [["class", "imgs", "gts", "dets", "recall", "ap"]]
-
-    # table data for show, each line has the number of image, annotations, detections and metrics
     bbox_coco_eval = coco_evaluator.coco_eval["bbox"]
+    
     for cat_idx, cat_name in enumerate(cat_names):
         cat_id = coco.getCatIds(catNms=cat_name)
         num_img_id = len(coco.getImgIds(catIds=cat_id))
@@ -158,7 +183,7 @@ def evaluate_acc(model, data_loader, epoch, accelerator=None):
         row_data += [f"{bbox_coco_eval.eval['precision'][0, :, cat_idx, 0, 2].mean().item():.3f}"]
         table_data.append(row_data)
 
-    # get the final line of mean results
+    # Calculate and append mean results
     cat_recall = coco_evaluator.coco_eval["bbox"].eval["recall"][0, :, 0, 2]
     valid_cat_recall = cat_recall[cat_recall >= 0]
     mean_recall = valid_cat_recall.sum() / max(len(valid_cat_recall), 1)
@@ -168,17 +193,18 @@ def evaluate_acc(model, data_loader, epoch, accelerator=None):
     mean_data = ["mean results", "", "", "", f"{mean_recall:.3f}", f"{mean_ap50:.3f}"]
     table_data.append(mean_data)
 
-    # show results
+    # Display results
     table = AsciiTable(table_data)
     table.inner_footing_row_border = True
     logger.info("\n" + table.table)
 
-    metric_names = ["mAP", "AP@50", "AP@75", "AP-s", "AP-m", "AP-l"]
-    metric_names += ["AR_1", "AR_10", "AR_100", "AR-s", "AR-m", "AR-l"]
-    metric_dict = dict(zip(metric_names, coco_evaluator.coco_eval["bbox"].stats))
-    accelerator.log({f"val/{k}": v for k, v in metric_dict.items()}, step=epoch)
-    return coco_evaluator
+    # Log confusion matrix
+    logger.info("Confusion Matrix:")
+    logger.info(f"\n{confusion_matrix}")
 
+    
+
+    return coco_evaluator
 
 def get_logging_string(metric_logger, data_loader, i, epoch):
     MB = 1024 * 1024

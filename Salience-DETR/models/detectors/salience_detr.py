@@ -1,14 +1,11 @@
 from typing import Dict, List, Tuple
-
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 from torchvision.ops import boxes as box_ops
-
 from models.bricks.denoising import GenerateCDNQueries
 from models.bricks.losses import sigmoid_focal_loss
 from models.detectors.base_detector import DNDETRDetector
-
 
 class SalienceCriterion(nn.Module):
     def __init__(
@@ -31,7 +28,6 @@ class SalienceCriterion(nn.Module):
             boxes = box_ops._box_cxcywh_to_xyxy(boxes)
             scale_factor = torch.tensor([img_w, img_h, img_w, img_h], device=boxes.device)
             gt_boxes_list.append(boxes * scale_factor)
-
         mask_targets = []
         for level_idx, (mask, feature_stride) in enumerate(zip(foreground_mask, feature_strides)):
             feature_shape = mask.shape[-2:]
@@ -40,7 +36,6 @@ class SalienceCriterion(nn.Module):
             for gt_boxes in gt_boxes_list:
                 mask = self.get_mask_single_level(coord_x, coord_y, gt_boxes, level_idx)
                 masks_per_level.append(mask)
-
             masks_per_level = torch.stack(masks_per_level)
             mask_targets.append(masks_per_level)
         mask_targets = torch.cat(mask_targets, dim=1)
@@ -115,7 +110,6 @@ class SalienceCriterion(nn.Module):
         mask = (1 - self.noise_scale) * mask + self.noise_scale * torch.rand_like(mask)
         return mask
 
-
 # SalienceDETR has the architecture similar to FocusDETR
 class SalienceDETR(DNDETRDetector):
     def __init__(
@@ -164,11 +158,9 @@ class SalienceDETR(DNDETRDetector):
         # get original image sizes, used for postprocess
         original_image_sizes = self.query_original_sizes(images)
         images, targets, mask = self.preprocess(images, targets)
-
         # extract features
         multi_level_feats = self.backbone(images.tensors)
         multi_level_feats = self.neck(multi_level_feats)
-
         multi_level_masks = []
         multi_level_position_embeddings = []
         for feature in multi_level_feats:
@@ -219,13 +211,11 @@ class SalienceDETR(DNDETRDetector):
 
         # prepare two stage output
         output["enc_outputs"] = {"pred_logits": enc_class, "pred_boxes": enc_coord}
-
         if self.training:
             # compute loss
             loss_dict = self.criterion(output, targets)
             dn_losses = self.compute_dn_loss(dn_metas, targets)
             loss_dict.update(dn_losses)
-
             # compute focus loss
             feature_stride = [(
                 images.tensors.shape[-2] / feature.shape[-2],
@@ -233,11 +223,9 @@ class SalienceDETR(DNDETRDetector):
             ) for feature in multi_level_feats]
             focus_loss = self.focus_criterion(foreground_mask, targets, feature_stride, images.image_sizes)
             loss_dict.update(focus_loss)
-
             # loss reweighting
             weight_dict = self.criterion.weight_dict
             loss_dict = dict((k, loss_dict[k] * weight_dict[k]) for k in loss_dict.keys() if k in weight_dict)
             return loss_dict
-
         detections = self.postprocessor(output, original_image_sizes)
         return detections

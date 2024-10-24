@@ -19,7 +19,7 @@ from models.necks.repnet import RepVGGPluXNetwork
 # mostly changed parameters
 embed_dim = 256
 num_classes = 11
-num_queries = 900
+num_queries = 300
 num_feature_levels = 4
 transformer_enc_layers = 6
 transformer_dec_layers = 6
@@ -32,7 +32,7 @@ position_embedding = PositionEmbeddingSine(
 )
 
 backbone = FocalNetBackbone(
-    "focalnet_large_lrf_fl4", return_indices=(1, 2, 3), freeze_indices=(0,)
+    "focalnet_large_lrf_fl4", return_indices=(1, 2, 3), freeze_indices=(0,1,2,3)
 )
 
 neck = ChannelMapper(
@@ -61,7 +61,7 @@ transformer = SalienceTransformer(
         activation=nn.SiLU,
         groups=4,
     ),
-    decoder=SalienceTransformerDecoder(
+    decoder=SalienceTransformerDecoder( 
         decoder_layer=SalienceTransformerDecoderLayer(
             embed_dim=embed_dim,
             n_heads=num_heads,
@@ -82,7 +82,7 @@ transformer = SalienceTransformer(
 )
 
 matcher = HungarianMatcher(
-    cost_class=2, cost_bbox=5, cost_giou=2, focal_alpha=0.25, focal_gamma=2.0
+    cost_class=1, cost_bbox=5, cost_giou=2, focal_alpha=0.25, focal_gamma=2.0
 )
 
 weight_dict = {"loss_class": 1, "loss_bbox": 5, "loss_giou": 2}
@@ -96,12 +96,12 @@ weight_dict.update({"loss_class_enc": 1, "loss_bbox_enc": 5, "loss_giou_enc": 2}
 weight_dict.update({"loss_salience": 2})
 
 criterion = HybridSetCriterion(
-    num_classes, matcher=matcher, weight_dict=weight_dict, alpha=0.25, gamma=2.0
+    num_classes, matcher=matcher, weight_dict=weight_dict, alpha=0.25, gamma=2.5
 )
-foreground_criterion = SalienceCriterion(noise_scale=0.0, alpha=0.25, gamma=2.0)
+foreground_criterion = SalienceCriterion(noise_scale=0.0, alpha=0.25, gamma=2.5)
 postprocessor = PostProcess(select_box_nums_for_evaluation=300)
 
-# combine above components to instantiate the model
+# combine above components to instantiae the model
 model = SalienceDETR(
     backbone=backbone,
     neck=neck,

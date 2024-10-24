@@ -75,7 +75,6 @@ def finetune_backbone_with_no_norm_weight_decay(model, lr):
         },
     ]
 
-
 def finetune_backbone_and_linear_projection(model, lr):
     linear_keywords = ("reference_points", "sampling_offsets")
     norm_bias_keywords = ("norm", "bias")
@@ -123,24 +122,24 @@ def finetune_backbone_and_linear_projection(model, lr):
         },
         {
             "params": backbone,
-            "lr": lr * 0.1,
+            "lr": lr * 0.2,  # backbone 학습률을 더 높게 설정
         },
         {
             "params": backbone_norm,
-            "lr": lr * 0.1,
-            "weight_decay": 0,
+            "lr": lr * 0.2,
+            "weight_decay": 0.01,  # weight decay를 약간 적용
         },
         {
             "params": linear_projection,
-            "lr": lr * 0.1,
+            "lr": lr * 0.5,  # linear_projection에 더 높은 학습률 적용
         },
         {
             "params": linear_projection_norm,
-            "lr": lr * 0.1,
-            "weight_decay": 0,
+            "lr": lr * 0.5,
+            "weight_decay": 0.01,
         },
         {
             "params": other_norm,
-            "weight_decay": 0,
+            "weight_decay": 0.01,  # 약간의 weight decay를 적용
         },
     ]

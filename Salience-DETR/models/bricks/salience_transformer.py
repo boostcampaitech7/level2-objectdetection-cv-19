@@ -482,6 +482,7 @@ class SalienceTransformerEncoder(nn.Module):
                         query_no_pad,
                     )
                 )
+            
             output = torch.stack(outputs)
 
         # add learnt embedding for background

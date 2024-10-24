@@ -59,7 +59,7 @@ def parse_args():
 def train():
     args = parse_args()
     cfg = Config(args.config_file, partials=("lr_scheduler", "optimizer", "param_dicts"))
-
+    
     # modify output directory
     if getattr(cfg, "output_dir", None) is None:
         if hasattr(cfg, "resume_from_checkpoint") and os.path.isdir(str(cfg.resume_from_checkpoint)):
@@ -184,13 +184,14 @@ def train():
 
         # we save model and labels together
         accelerator.save_state(safe_serialization=False)
+        
         logger.info("Start evaluation")
         coco_evaluator = evaluate_acc(model, test_loader, epoch, accelerator)
 
         # save best results
         cur_ap, cur_ap50 = coco_evaluator.coco_eval["bbox"].stats[:2]
         highest_checkpoint.update(ap=cur_ap, ap50=cur_ap50)
-
+        
     total_time = time.perf_counter() - start_time
     total_time = str(datetime.timedelta(seconds=int(total_time)))
     logger.info("Training time: {}".format(total_time))
