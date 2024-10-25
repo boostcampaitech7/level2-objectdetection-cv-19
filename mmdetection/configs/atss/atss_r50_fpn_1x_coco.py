@@ -3,7 +3,6 @@ _base_ = [
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
 
-# model settings
 model = dict(
     type='ATSS',
     data_preprocessor=dict(
@@ -12,6 +11,7 @@ model = dict(
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=True,
         pad_size_divisor=32),
+
     backbone=dict(
         type='ResNet',
         depth=50,
@@ -69,3 +69,4 @@ model = dict(
 # optimizer
 optim_wrapper = dict(
     optimizer=dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001))
+
