@@ -1,0 +1,24 @@
+asynctest #0.13.0
+cityscapesscripts #2.2.2
+codecov #2.1.13
+flake8 #6.1.0
+imagecorruptions #1.1.2
+instaboostfast 
+interrogate #1.5.0
+isort==4.3.21
+# Note: used for kwarray.group_items, this may be ported to mmcv in the future.
+kwarray #0.6.16
+memory_profiler 
+-e git+https://github.com/open-mmlab/mmtracking@dev-1.x#egg=mmtrack
+nltk
+onnx==1.7.0 #1.12.0
+onnxruntime>=1.8.0 #1.16.3
+parameterized
+prettytable
+protobuf<=3.20.1 #3.20.1
+psutil #5.9.0
+pytest #7.4.3
+transformers
+ubelt #1.3.4
+xdoctest>=0.10.0 #1.1.2
+yapf #0.40.2
