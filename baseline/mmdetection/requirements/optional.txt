@@ -1,4 +1,5 @@
-cityscapesscripts
-imagecorruptions
-scipy
-sklearn
+cityscapesscripts #2.2.2
+emoji 
+fairscale
+imagecorruptions #1.1.2
+scikit-learn #1.3.2
