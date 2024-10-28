@@ -11,6 +11,7 @@
 
 ## 평가 방법
 모델 성능은 Test set의 mAP50(Mean Average Precision) 기준으로 평가됩니다. 이는 Object Detection 분야에서 일반적으로 사용하는 성능 측정 방식으로, Ground Truth 박스와 Prediction 박스 간의 IoU(Intersection Over Union)가 0.5 이상일 때 True로 간주합니다.
+
 ![image](https://github.com/user-attachments/assets/e763b4cb-4be3-42e8-b8ca-856b424f2699)
 
 ![image](https://github.com/user-attachments/assets/d4fb7058-76fe-4974-9a55-7135c38c34c9)
