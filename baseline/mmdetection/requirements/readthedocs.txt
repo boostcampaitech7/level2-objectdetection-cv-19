@@ -1,6 +1,0 @@
-mmcv>=2.0.0rc4,<2.2.0 #2.0.0
-mmengine>=0.7.1,<1.0.0 #0.10.1
-scipy #1.7.3
-torch #1.12.1+cu116
-torchvision #0.13.1+cu116
-urllib3<2.0.0
